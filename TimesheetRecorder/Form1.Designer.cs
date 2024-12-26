@@ -32,64 +32,96 @@
             btnStopTask = new Button();
             textBox1 = new TextBox();
             label1 = new Label();
-            btnOpenLogs = new Button();
+            button1 = new Button();
+            button2 = new Button();
+            linkLabel1 = new LinkLabel();
             SuspendLayout();
             // 
             // btnTaskStart
             // 
-            btnTaskStart.Location = new Point(572, 1);
+            btnTaskStart.Font = new Font("Microsoft YaHei", 9.75F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            btnTaskStart.Location = new Point(280, 27);
             btnTaskStart.Name = "btnTaskStart";
             btnTaskStart.Size = new Size(89, 33);
             btnTaskStart.TabIndex = 0;
-            btnTaskStart.Text = "Start";
+            btnTaskStart.Text = "Start / 开始";
             btnTaskStart.UseVisualStyleBackColor = true;
             btnTaskStart.Click += btnTaskStart_Click;
             // 
             // btnStopTask
             // 
-            btnStopTask.Location = new Point(572, 40);
+            btnStopTask.Font = new Font("Microsoft YaHei", 9.75F);
+            btnStopTask.Location = new Point(280, 63);
             btnStopTask.Name = "btnStopTask";
             btnStopTask.Size = new Size(89, 33);
             btnStopTask.TabIndex = 1;
-            btnStopTask.Text = "Stop";
+            btnStopTask.Text = "Stop / 停止";
             btnStopTask.UseVisualStyleBackColor = true;
             btnStopTask.Click += btnStopTask_Click;
             // 
             // textBox1
             // 
-            textBox1.Font = new Font("Segoe UI", 14.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            textBox1.Location = new Point(3, 1);
+            textBox1.Font = new Font("Microsoft YaHei", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            textBox1.Location = new Point(1, 29);
             textBox1.Name = "textBox1";
-            textBox1.Size = new Size(563, 33);
+            textBox1.Size = new Size(276, 29);
             textBox1.TabIndex = 2;
-            textBox1.TextAlign = HorizontalAlignment.Center;
             textBox1.TextChanged += textBox1_TextChanged;
             textBox1.KeyDown += textBox1_KeyDown;
             // 
             // label1
             // 
             label1.AutoSize = true;
-            label1.Location = new Point(108, 47);
+            label1.Font = new Font("Century Gothic", 11.25F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            label1.Location = new Point(215, 3);
             label1.Name = "label1";
-            label1.Size = new Size(144, 19);
+            label1.Size = new Size(154, 18);
             label1.TabIndex = 3;
-            label1.Text = "What am I doing ATM";
+            label1.Text = "Timesheet Recorder";
             // 
-            // btnOpenLogs
+            // button1
             // 
-            btnOpenLogs.Location = new Point(3, 40);
-            btnOpenLogs.Name = "btnOpenLogs";
-            btnOpenLogs.Size = new Size(99, 33);
-            btnOpenLogs.TabIndex = 4;
-            btnOpenLogs.Text = "Open Logs";
-            btnOpenLogs.UseVisualStyleBackColor = true;
+            button1.Font = new Font("Microsoft YaHei", 9.75F);
+            button1.Location = new Point(163, 63);
+            button1.Name = "button1";
+            button1.Size = new Size(114, 33);
+            button1.TabIndex = 5;
+            button1.Text = "Meeting / 会议";
+            button1.UseVisualStyleBackColor = true;
+            button1.Click += button1_Click;
+            // 
+            // button2
+            // 
+            button2.Font = new Font("Microsoft YaHei", 9.75F);
+            button2.Location = new Point(1, 63);
+            button2.Name = "button2";
+            button2.Size = new Size(159, 33);
+            button2.TabIndex = 6;
+            button2.Text = "Last Task / 上一个任务";
+            button2.UseVisualStyleBackColor = true;
+            button2.Click += button2_Click;
+            // 
+            // linkLabel1
+            // 
+            linkLabel1.AutoSize = true;
+            linkLabel1.Font = new Font("Microsoft YaHei", 8.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            linkLabel1.LinkColor = Color.Gray;
+            linkLabel1.Location = new Point(1, 5);
+            linkLabel1.Name = "linkLabel1";
+            linkLabel1.Size = new Size(119, 16);
+            linkLabel1.TabIndex = 7;
+            linkLabel1.TabStop = true;
+            linkLabel1.Text = "Open Logs / 历史记录";
+            linkLabel1.LinkClicked += linkLabel1_LinkClicked;
             // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(8F, 19F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(662, 76);
-            Controls.Add(btnOpenLogs);
+            ClientSize = new Size(373, 98);
+            Controls.Add(linkLabel1);
+            Controls.Add(button2);
+            Controls.Add(button1);
             Controls.Add(label1);
             Controls.Add(textBox1);
             Controls.Add(btnStopTask);
@@ -108,6 +140,8 @@
         private Button btnStopTask;
         private TextBox textBox1;
         private Label label1;
-        private Button btnOpenLogs;
+        private Button button1;
+        private Button button2;
+        private LinkLabel linkLabel1;
     }
 }

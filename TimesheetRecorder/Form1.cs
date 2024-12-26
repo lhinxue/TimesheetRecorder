@@ -1,4 +1,5 @@
 
+using System.Diagnostics;
 using System.Timers;
 
 namespace TimesheetRecorder
@@ -8,7 +9,7 @@ namespace TimesheetRecorder
 
         private const double ACTIVE_OPACITY = 1.0;       // Opacity when active or hovered
         private const double INACTIVE_OPACITY = 0.5;    // Opacity when inactive
-        private const double ANIMATION_DURATION = 200; // Duration of opacity transition in ms
+        private const double ANIMATION_DURATION = 150; // Duration of opacity transition in ms
         private const int TIMER_INTERVAL = 10;
 
 
@@ -16,6 +17,7 @@ namespace TimesheetRecorder
         private double targetOpacity;
         private double opacityStep;
 
+        private string oldTask;
         private string currentTask;
         private string newTask;
         private System.Timers.Timer changeTimer;
@@ -129,13 +131,15 @@ namespace TimesheetRecorder
         public void RecordTask(string task, bool start)
         {
             if (task == currentTask) return;
+            oldTask = currentTask;
             currentTask = task;
+            this.textBox1.Text = task;
             // Get the current date and time
             string currentDate = DateTime.Now.ToString("yyyy-MM-dd");
             string currentTimeStamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm");
 
             // Define the file path using the current date
-            string filePath = Path.Combine(@"C:\temp", $"{currentDate}.txt");
+            string filePath = Path.Combine(@"C:\temp", $"TimesheetRecorderHistory_{currentDate}.txt");
 
             // Prepare the log entry
             string logEntry = $"{currentTimeStamp}: {task} [{(start ? "start" : "stop")}]";
@@ -196,6 +200,29 @@ namespace TimesheetRecorder
         {
             // Trigger FUNC1 when the timer elapses (i.e., after 30 seconds of inactivity)
             RecordTask(textBox1.Text, true);
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            if (!string.IsNullOrEmpty(oldTask))
+            {
+                RecordTask(oldTask, true);
+            }
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            RecordTask("Meeting", true);
+        }
+
+        private void linkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            Process.Start(new System.Diagnostics.ProcessStartInfo()
+            {
+                FileName = @"C:\temp",
+                UseShellExecute = true,
+                Verb = "open"
+            });
         }
     }
 }
