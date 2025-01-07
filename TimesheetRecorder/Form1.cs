@@ -1,5 +1,6 @@
 
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 using System.Timers;
 
 namespace TimesheetRecorder
@@ -8,7 +9,7 @@ namespace TimesheetRecorder
     {
 
         private const double ACTIVE_OPACITY = 1.0;       // Opacity when active or hovered
-        private const double INACTIVE_OPACITY = 0.5;    // Opacity when inactive
+        private const double INACTIVE_OPACITY = 0.7;    // Opacity when inactive
         private const double ANIMATION_DURATION = 150; // Duration of opacity transition in ms
         private const int TIMER_INTERVAL = 10;
 
@@ -43,7 +44,7 @@ namespace TimesheetRecorder
         {
 
             TopMost = true;
-            FormBorderStyle = FormBorderStyle.None;
+            //FormBorderStyle = FormBorderStyle.None;
 
             // Get the screen where the cursor is located
             Screen currentScreen = Screen.FromPoint(Cursor.Position);
@@ -130,10 +131,13 @@ namespace TimesheetRecorder
 
         public void RecordTask(string task, bool start)
         {
-            if (task == currentTask) return;
-            oldTask = currentTask;
-            currentTask = task;
-            this.textBox1.Text = task;
+            if (string.IsNullOrEmpty(task)) return;
+            if ((start && task != currentTask)||!start) {
+                oldTask = currentTask;
+                currentTask = start?task:"";
+                this.textBox1.Text = start ? task : "";
+            }
+            
             // Get the current date and time
             string currentDate = DateTime.Now.ToString("yyyy-MM-dd");
             string currentTimeStamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm");
@@ -223,6 +227,174 @@ namespace TimesheetRecorder
                 UseShellExecute = true,
                 Verb = "open"
             });
+        }
+
+        public static List<string> GetUniqueTasks()
+        {
+            string directoryPath = @"C:\\temp";
+            string filePattern = "TimesheetRecorderHistory_*.txt";
+            int maxFilesToProcess = 5;
+
+            try
+            {
+                // Get all files matching the pattern
+                var files = Directory.GetFiles(directoryPath, filePattern)
+                                     .OrderByDescending(File.GetLastWriteTime)
+                                     .Take(maxFilesToProcess);
+
+                HashSet<string> uniqueTasks = new HashSet<string>();
+                HashSet<string> excludedTasks = new HashSet<string> { "Meeting", "Peer Support", "Training", "Admin" };
+
+                foreach (var file in files)
+                {
+                    // Read all lines from the file
+                    var lines = File.ReadAllLines(file);
+
+                    foreach (var line in lines)
+                    {
+                        // Match the task pattern
+                        var match = Regex.Match(line, @"\d{4}-\d{2}-\d{2} \d{2}:\d{2}: (.+?) \[start\]");
+                        if (match.Success)
+                        {
+                            string task = match.Groups[1].Value;
+                            if (!excludedTasks.Contains(task))
+                            {
+                                uniqueTasks.Add(task);
+                            }
+                        }
+                    }
+                }
+
+                return uniqueTasks.ToList();
+            }
+            catch (Exception ex)
+            {
+                return new List<string>();
+            }
+        }
+
+        private void button6_Click(object sender, EventArgs e)
+        {
+            contextMenuStrip1.Items.Clear();
+            foreach (var item in GetUniqueTasks())
+            {
+                contextMenuStrip1.Items.Add(item, null, MenuItem_Click);
+            }
+            contextMenuStrip1.Show(button6, 0, button6.Height);
+        }
+
+        private void MenuItem_Click(object sender, EventArgs e)
+        {
+            if (sender is ToolStripMenuItem menuItem)
+            {
+                RecordTask(menuItem.Text ?? "", true);
+            }
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+
+            RecordTask("Peer Support", true);
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+
+            RecordTask("Training", true);
+        }
+
+        private void button5_Click(object sender, EventArgs e)
+        {
+
+            RecordTask("Admin", true);
+        }
+
+        public static void GenerateTimesheetFile()
+        {
+            string directoryPath = @"C:\\temp";
+            string filePattern = "TimesheetRecorderHistory_*.txt";
+            string outputFilePath = $"{directoryPath}\\GeneratedTimesheet_{DateTime.Now:yyyyMMddHHmmss}.txt";
+
+            try
+            {
+                var files = Directory.GetFiles(directoryPath, filePattern)
+                                     .OrderByDescending(File.GetLastWriteTime);
+
+                using (StreamWriter writer = new StreamWriter(outputFilePath))
+                {
+                    foreach (var file in files)
+                    {
+                        var lines = File.ReadAllLines(file);
+                        var tasks = new Dictionary<string, TimeSpan>();
+                        DateTime? lastTimestamp = null;
+                        string lastTask = null;
+
+                        foreach (var line in lines)
+                        {
+                            var match = Regex.Match(line, @"(\d{4}-\d{2}-\d{2} \d{2}:\d{2}): (.+?) \[(start|stop)\]");
+                            if (match.Success)
+                            {
+                                DateTime timestamp = DateTime.Parse(match.Groups[1].Value);
+                                string task = match.Groups[2].Value;
+                                string action = match.Groups[3].Value;
+
+                                if (lastTimestamp.HasValue && lastTask != null)
+                                {
+                                    if (action == "start" && task != lastTask || action == "stop")
+                                    {
+                                        TimeSpan duration = timestamp - lastTimestamp.Value;
+                                        if (!tasks.ContainsKey(lastTask))
+                                            tasks[lastTask] = TimeSpan.Zero;
+                                        tasks[lastTask] += duration;
+
+                                        lastTask = action == "start" ? task : null;
+                                        lastTimestamp = action == "start" ? (DateTime?)timestamp : null;
+                                    }
+                                }
+                                else if (action == "start")
+                                {
+                                    lastTask = task;
+                                    lastTimestamp = timestamp;
+                                }
+                            }
+                        }
+
+                        // Add time until end of day if last task is still running
+                        if (lastTimestamp.HasValue && lastTask != null)
+                        {
+                            DateTime endOfDay = lastTimestamp.Value.Date.AddHours(17.5); // 5:30 PM
+                            if (!tasks.ContainsKey(lastTask))
+                                tasks[lastTask] = TimeSpan.Zero;
+                            tasks[lastTask] += endOfDay - lastTimestamp.Value;
+                        }
+
+                        writer.WriteLine($"{Path.GetFileNameWithoutExtension(file)}:");
+                        foreach (var task in tasks)
+                        {
+                            double hours = Math.Ceiling(task.Value.TotalHours * 4) / 4; // Round up to nearest 0.25
+                            writer.WriteLine($"- [{task.Key}] {hours} Hour(s)");
+                        }
+                        writer.WriteLine();
+                    }
+                }
+
+                // Open the generated file
+                System.Diagnostics.Process.Start("notepad.exe", outputFilePath);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred: {ex.Message}");
+            }
+        }
+
+        private void linkLabel2_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            GenerateTimesheetFile();
+        }
+
+        private void linkLabel3_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+
         }
     }
 }
